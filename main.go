@@ -2,19 +2,15 @@ package main
 
 import (
 	"flag"
+	"fmt"
 	"io/ioutil"
 	"log"
 	"os"
 	"strconv"
-	"time"
-
-	"fmt"
 )
 
 const (
 	FileModeRW os.FileMode = 0666
-
-	MonitorInterval = 10 * time.Second
 )
 
 var (
@@ -40,9 +36,10 @@ func main() {
 		if !ps.Enable || ps.PidFile == "" {
 			continue
 		}
-		go processMonitor(ps, complete)
+
+		go monitorProcess(ps, complete)
+		<-complete
 	}
-	<-complete
 
 	logger.Println("pmon shutting down")
 }
@@ -80,20 +77,4 @@ func savePid(file string) {
 		log.Printf("%v", err)
 		os.Exit(1)
 	}
-}
-
-// process monitor
-func processMonitor(ps *Process, complete chan int) {
-	for {
-		//TODO monitor logic
-
-		fmt.Println("monitor ", ps.Name, ps.PidFile)
-
-		d, err := time.ParseDuration(ps.Interval)
-		if err != nil {
-			d = MonitorInterval
-		}
-		time.Sleep(d)
-	}
-	complete <- 1
 }

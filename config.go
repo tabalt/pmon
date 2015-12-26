@@ -12,9 +12,10 @@ type Process struct {
 	Interval string `json:"interval"`
 	PidFile  string `json:"pidfile"`
 
-	Command string `json:"command"`
-	StdOut  string `json:"stdout"`
-	StdErr  string `json:"stderr"`
+	Command   string `json:"command"`
+	StdOut    string `json:"stdout"`
+	StdErr    string `json:"stderr"`
+	StartWait string `json:"startwait"`
 }
 
 type Config struct {
