@@ -25,13 +25,6 @@ const (
 func monitorProcess(ps *Process, complete chan int) {
 	for {
 
-		// sleep a while
-		d, intervalError := time.ParseDuration(ps.Interval)
-		if intervalError != nil {
-			d = DefaultMonitorInterval
-		}
-		time.Sleep(d)
-
 		// monitor process
 		logger.Println("monitor process " + ps.Name + " by pid file " + ps.PidFile)
 
@@ -56,6 +49,13 @@ func monitorProcess(ps *Process, complete chan int) {
 		}
 
 		logger.Println("process with pid " + pid + " is running")
+
+		// sleep a while
+		d, intervalError := time.ParseDuration(ps.Interval)
+		if intervalError != nil {
+			d = DefaultMonitorInterval
+		}
+		time.Sleep(d)
 
 	}
 	complete <- 1

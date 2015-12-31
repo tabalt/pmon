@@ -7,11 +7,11 @@
         "enable" : true,
         "user" : "nobody",
         "pidfile" : "./testdaemon/tmp/testdaemon.pid",
-        "interval" : "5s",
+        "interval" : "10s",
 
         "command" : "./testdaemon/testdaemon -c test.conf",
         "stdout" : ">>./testdaemon/tmp/testdaemon.log",
         "stderr" : ">&1",
-        "startwait" : "5s"
+        "startwait" : "10s"
     }]
 }
