@@ -2,4 +2,4 @@
 pmon
 ---
 
-pmon is a process monitor 
+pmon is a daemon process monitor 
