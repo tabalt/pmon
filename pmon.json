@@ -1,0 +1,17 @@
+{
+    "pidfile" : "./tmp/pmon.pid",
+    "logfile" : "./tmp/pmon.log",
+
+    "process" : [{
+        "name" : "testdaemon",
+        "enable" : true,
+        "user" : "nobody",
+        "pidfile" : "./testdaemon/tmp/testdaemon.pid",
+        "interval" : "5s",
+
+        "command" : "./testdaemon/testdaemon -c test.conf",
+        "stdout" : ">>./testdaemon/tmp/testdaemon.log",
+        "stderr" : ">&1",
+        "startwait" : "5s"
+    }]
+}
