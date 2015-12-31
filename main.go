@@ -67,7 +67,7 @@ func initLogger(file string) {
 		fmt.Printf("init log failed. error: %s\n", err.Error())
 		os.Exit(1)
 	}
-	logger = log.New(logFile, "", log.Ldate|log.Ltime|log.Lshortfile)
+	logger = log.New(logFile, "", log.Ldate|log.Ltime)
 }
 
 // save pid
