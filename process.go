@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"io/ioutil"
 	"os/exec"
+	"os/user"
 	"strings"
 	"time"
 )
@@ -107,18 +108,16 @@ func getProcessStatByPid(pid string) (string, error) {
 }
 
 // try to start process
-func startProcess(ps *Process) (string, error) {
+func startProcess(ps *Process) {
+	shell := fmt.Sprintf("nohup %s 1%s 2%s &", ps.Command, ps.StdOut, ps.StdErr)
 
-	shell := fmt.Sprintf("%s 1%s 2%s &", ps.Command, ps.StdOut, ps.StdErr)
+	logger.Println(fmt.Sprintf("try to start %s, exec bash command: %s", ps.Name, shell))
 
-	logger.Println(fmt.Sprintf(
-		"try to start %s, exec bash command: %s",
-		ps.Name,
-		shell,
-	))
-
-	cmd := exec.Command("/bin/bash", "-c", shell)
-	cmd.Start()
+	_, err := runShell(shell, ps.User)
+	if err != nil {
+		logger.Println(fmt.Sprintf("start %s failed, error: %v", ps.Name, err))
+		return
+	}
 
 	// wait process start
 	d, err := time.ParseDuration(ps.StartWait)
@@ -127,5 +126,26 @@ func startProcess(ps *Process) (string, error) {
 	}
 	time.Sleep(d)
 
-	return "", nil
+}
+
+func runShell(shell string, userName string) ([]byte, error) {
+	uc, _ := user.Current()
+	if userName != "" && userName != uc.Name {
+		if uc.Name == "root" {
+			shell = fmt.Sprintf(
+				"/sbin/runuser %s -c \"%s\"",
+				userName,
+				strings.Replace(shell, "\"", "\\\"", -1),
+			)
+		} else {
+			shell = fmt.Sprintf(
+				"sudo -u %s %s",
+				userName,
+				shell,
+			)
+		}
+	}
+
+	cmd := exec.Command("/bin/bash", "-c", shell)
+	return cmd.CombinedOutput()
 }

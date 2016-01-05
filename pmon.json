@@ -5,7 +5,7 @@
     "process" : [{
         "name" : "testdaemon",
         "enable" : true,
-        "user" : "nobody",
+        "user" : "sync360",
         "pidfile" : "./testdaemon/tmp/testdaemon.pid",
         "interval" : "10s",
 
