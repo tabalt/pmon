@@ -3,10 +3,10 @@ package main
 import (
 	"flag"
 	"fmt"
-	"io/ioutil"
 	"log"
 	"os"
-	"strconv"
+
+	"github.com/tabalt/pmon/process"
 )
 
 const (
@@ -25,23 +25,7 @@ func init() {
 	initConfig()
 	initLogger(config.LogFile)
 
-	savePid(config.PidFile)
-}
-
-func main() {
-	logger.Println("pmon started")
-
-	complete := make(chan int)
-	for _, ps := range config.ProcessList {
-		if !ps.Enable || ps.PidFile == "" {
-			continue
-		}
-
-		go monitorProcess(ps, complete)
-		<-complete
-	}
-
-	logger.Println("pmon shutting down")
+	writePid(config.PidFile)
 }
 
 // init flag
@@ -70,9 +54,9 @@ func initLogger(file string) {
 	logger = log.New(logFile, "", log.Ldate|log.Ltime)
 }
 
-// save pid
-func savePid(file string) {
-	err := ioutil.WriteFile(file, []byte(strconv.Itoa(os.Getpid())), FileModeRW)
+// write pid
+func writePid(file string) {
+	err := process.WritePid(file, FileModeRW)
 	if err != nil {
 		log.Printf("%v", err)
 		os.Exit(1)

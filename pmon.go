@@ -2,41 +2,49 @@ package main
 
 import (
 	"fmt"
-	"io/ioutil"
 	"os/exec"
 	"os/user"
 	"strings"
 	"time"
+
+	"github.com/tabalt/pmon/process"
 )
 
 const (
 	DefaultMonitorInterval = 10 * time.Second
 	DefaultStartWait       = 10 * time.Second
-
-	ProcessStatIndex = 2
-
-	ProcessStatRunning         = "R"
-	ProcessStatSleeping        = "S"
-	ProcessStatStoped          = "T"
-	ProcessStatZombie          = "Z"
-	ProcessStatUninterruptible = "D"
 )
+
+func main() {
+	logger.Println("pmon started")
+
+	complete := make(chan int)
+	for _, ps := range config.ProcessList {
+		if !ps.Enable || ps.PidFile == "" {
+			continue
+		}
+
+		go monitorProcess(ps, complete)
+		<-complete
+	}
+
+	logger.Println("pmon shutting down")
+}
 
 // monitor a process
 func monitorProcess(ps *Process, complete chan int) {
 	for {
-
 		// monitor process
 		logger.Println("monitor process " + ps.Name + " by pid file " + ps.PidFile)
 
-		pid, err := getPidFromFile(ps.PidFile)
+		pid, err := process.ReadPid(ps.PidFile)
 		if err != nil {
 			logger.Println("failed to get pid, error: " + err.Error())
 			startProcess(ps)
 			continue
 		}
 
-		running, err := isProcessRunning(pid)
+		running, err := process.IsRunning(pid)
 		if err != nil {
 			logger.Println("failed to get process stat, error: " + err.Error())
 			startProcess(ps)
@@ -62,51 +70,6 @@ func monitorProcess(ps *Process, complete chan int) {
 	complete <- 1
 }
 
-// get pid from pid file
-func getPidFromFile(file string) (string, error) {
-	pidBytes, err := ioutil.ReadFile(file)
-	if err != nil {
-		return "", err
-	}
-
-	pid := strings.TrimSpace(string(pidBytes))
-	if pid == "" {
-		return "", fmt.Errorf("pid file is empty")
-	}
-	return pid, nil
-}
-
-// check process running or not by pid
-func isProcessRunning(pid string) (bool, error) {
-	stat, err := getProcessStatByPid(pid)
-	if err != nil {
-		return false, err
-	}
-
-	if stat == ProcessStatStoped || stat == ProcessStatZombie {
-		return false, nil
-	}
-	return true, nil
-}
-
-// read /proc/$pid/stat to get process stat
-func getProcessStatByPid(pid string) (string, error) {
-	file := "/proc/" + pid + "/stat"
-	statBytes, err := ioutil.ReadFile(file)
-	if err != nil {
-		return "", err
-	}
-
-	stat := strings.TrimSpace(string(statBytes))
-	statList := strings.Split(stat, " ")
-
-	if len(statList) < (ProcessStatIndex + 1) {
-		return "", fmt.Errorf("stat file is empty")
-	}
-
-	return strings.TrimSpace(statList[ProcessStatIndex]), nil
-}
-
 // try to start process
 func startProcess(ps *Process) {
 	shell := fmt.Sprintf("nohup %s 1%s 2%s &", ps.Command, ps.StdOut, ps.StdErr)
@@ -128,10 +91,11 @@ func startProcess(ps *Process) {
 
 }
 
+// run shell
 func runShell(shell string, userName string) ([]byte, error) {
 	uc, _ := user.Current()
-	if userName != "" && userName != uc.Name {
-		if uc.Name == "root" {
+	if userName != "" && userName != uc.Username {
+		if uc.Username == "root" {
 			shell = fmt.Sprintf(
 				"/sbin/runuser %s -c \"%s\"",
 				userName,
