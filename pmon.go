@@ -19,12 +19,18 @@ func main() {
 	logger.Println("pmon started")
 
 	complete := make(chan int)
+
+	processCount := 0
 	for _, ps := range config.ProcessList {
 		if !ps.Enable || ps.PidFile == "" {
 			continue
 		}
 
+		processCount++
 		go monitorProcess(ps, complete)
+	}
+
+	for i := 0; i < processCount; i++ {
 		<-complete
 	}
 
