@@ -7,7 +7,7 @@ import (
 	"strings"
 	"time"
 
-	"github.com/tabalt/pmon/process"
+	"github.com/tabalt/pidfile"
 )
 
 const (
@@ -21,13 +21,13 @@ func main() {
 	complete := make(chan int)
 
 	processCount := 0
-	for _, ps := range config.ProcessList {
-		if !ps.Enable || ps.PidFile == "" {
+	for _, process := range config.ProcessList {
+		if !process.Enable || process.PidFile == "" {
 			continue
 		}
 
 		processCount++
-		go monitorProcess(ps, complete)
+		go monitorProcess(process, complete)
 	}
 
 	for i := 0; i < processCount; i++ {
@@ -38,10 +38,14 @@ func main() {
 }
 
 // monitor a process
-func monitorProcess(ps *Process, complete chan int) {
+func monitorProcess(process *Process, complete chan int) {
 	for {
 		// monitor process
-		logger.Println("monitor process " + ps.Name + " by pid file " + ps.PidFile)
+		logger.Println("monitor process " + process.Name + " by pid file " + process.PidFile)
+
+		pf := NewPidFile(process.PidFile)
+		
+
 
 		pid, err := process.ReadPid(ps.PidFile)
 		if err != nil {
